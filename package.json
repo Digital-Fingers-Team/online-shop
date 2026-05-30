@@ -1,0 +1,19 @@
+{
+  "name": "online-shop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Production-ready simplified Amazon-inspired e-commerce MVP monorepo.",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @online-shop/api --filter @online-shop/web dev",
+    "build": "pnpm --recursive build",
+    "lint": "pnpm --recursive lint",
+    "typecheck": "pnpm --recursive typecheck",
+    "prisma:generate": "pnpm --filter @online-shop/api prisma:generate",
+    "prisma:push": "pnpm --filter @online-shop/api prisma:push"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.4"
+}
