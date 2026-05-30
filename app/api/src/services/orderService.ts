@@ -1,11 +1,11 @@
-import type { OrderStatus } from '@prisma/client';
+import type { OrderStatus, Prisma } from '@prisma/client';
 import { prisma } from '../config/prisma.js';
 import { AppError } from '../utils/AppError.js';
 
 const includeOrder = { items: { include: { product: true } }, user: { select: { id: true, email: true, name: true } } };
 
 export const orderService = {
-  async checkout(userId: string, shippingAddress: Record<string, unknown>) {
+  async checkout(userId: string, shippingAddress: Prisma.InputJsonValue) {
     return prisma.$transaction(async (tx) => {
       const cart = await tx.cart.findUnique({ where: { userId }, include: { items: { include: { product: true } } } });
       if (!cart || cart.items.length === 0) throw new AppError('Cart is empty', 400, 'EMPTY_CART');
