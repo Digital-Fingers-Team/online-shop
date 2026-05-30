@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StateMessage } from '@/components/StateMessage';
 import { apiFetch, money } from '@/lib/api';
 import type { Cart } from '@/types/domain';
@@ -10,8 +10,12 @@ export default function CartPage() {
   const [cart, setCart] = useState<Cart>();
   const [error, setError] = useState('');
   const total = useMemo(() => cart?.items.reduce((sum, item) => sum + item.product.price * item.quantity, 0) ?? 0, [cart]);
-  const load = () => apiFetch<Cart>('/cart').then(setCart).catch((err) => setError(err.message));
-  useEffect(load, []);
+  const load = useCallback(() => {
+    void apiFetch<Cart>('/cart').then(setCart).catch((err) => setError(err.message));
+  }, []);
+  useEffect(() => {
+    load();
+  }, [load]);
   async function update(productId: string, quantity: number) { await apiFetch(`/cart/items/${productId}`, { method: 'PATCH', body: JSON.stringify({ quantity }) }); load(); }
   if (error) return <div className="container-page"><StateMessage title="Login required" description={error} /></div>;
   if (!cart) return <div className="container-page"><StateMessage title="Loading cart" description="Restoring your saved cart." /></div>;
