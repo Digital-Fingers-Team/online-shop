@@ -1,1 +1,0 @@
-export function Footer() { return <footer className="mt-16 border-t bg-white"><div className="container-page py-8 text-sm text-slate-600">Built for independent Railway deployment: Next.js web in <code>apps/web</code>, Express API in <code>apps/api</code>.</div></footer>; }

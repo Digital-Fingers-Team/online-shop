@@ -1,7 +1,0 @@
-"use client";
-import { useEffect, useState } from "react";
-import type { CartDTO } from "@marketplace/types";
-import { formatCurrency } from "@marketplace/utils";
-import { marketplaceApi } from "@/lib/api";
-import { useAuth } from "@/providers/AuthProvider";
-export default function CartPage() { const { token } = useAuth(); const [cart, setCart] = useState<CartDTO | null>(null); const [address, setAddress] = useState(""); useEffect(() => { if (token) marketplaceApi.cart(token).then(setCart); }, [token]); return <main className="container-page py-10"><h1 className="text-4xl font-black">Shopping cart</h1>{!token && <p className="mt-4">Login to view your cart.</p>}<div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]"><section className="space-y-3">{cart?.items.map((item) => <div className="card flex items-center gap-4 p-4" key={item.product.id}><img src={item.product.images[0]} alt="" className="h-20 w-20 rounded-xl object-cover"/><div><h2 className="font-bold">{item.product.title}</h2><p>{item.quantity} × {formatCurrency(item.priceSnapshot)}</p></div></div>)}</section><aside className="card h-fit space-y-4 p-5"><h2 className="text-xl font-bold">Subtotal {formatCurrency(cart?.subtotal ?? 0)}</h2><textarea className="input" placeholder="Shipping address" value={address} onChange={(e) => setAddress(e.target.value)}/><button className="btn-primary w-full" disabled={!token || !cart?.items.length} onClick={() => token && marketplaceApi.checkout(token, address)}>Place order</button></aside></div></main>; }
