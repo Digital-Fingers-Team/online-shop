@@ -1,118 +1,133 @@
 # MarketPilot Marketplace MVP
 
-MarketPilot is a production-oriented marketplace foundation inspired by Amazon but scoped for a startup MVP. It uses the Next.js App Router, React, TypeScript, Tailwind CSS, MongoDB with Mongoose, REST API routes, JWT access/refresh authentication, and role-based authorization.
+A production-ready Amazon-inspired marketplace MVP built **from the beginning as a pnpm monorepo**. The frontend and backend are intentionally separate applications so they can be deployed independently on Railway.
+
+## Final folder tree
+
+```txt
+root/
+├── apps/
+│   ├── web/                 # Next.js App Router, React, Tailwind CSS
+│   └── api/                 # Node.js, Express, MongoDB, Mongoose, JWT REST API
+├── packages/
+│   ├── types/               # Shared TypeScript DTOs and domain types
+│   ├── shared/              # Shared validation schemas and constants
+│   └── utils/               # Shared formatting/query helper utilities
+├── package.json
+├── pnpm-workspace.yaml
+├── .gitignore
+├── .env.example
+└── README.md
+```
 
 ## Architectural decisions
 
-- **App Router first:** server-rendered marketplace, profile, dashboard, cart, order, and product pages live under `src/app`.
-- **Service layer separation:** API route handlers stay thin and delegate business workflows to `src/lib/services`.
-- **Central validation and errors:** Zod schemas validate input, while `AppError` and `handler` provide consistent JSON error responses.
-- **Secure auth model:** passwords are hashed with bcrypt, access and refresh JWTs are stored in HTTP-only cookies, and protected routes are enforced with middleware plus API-level role checks.
-- **MongoDB performance:** Mongoose schemas define required fields, timestamps, and indexes for search, filtering, user lookups, seller products, cart ownership, and order history.
-- **Startup-realistic uploads:** seller product creation accepts image URLs in the MVP. The same service/API boundary can be extended to signed S3 or Cloudinary uploads.
+- **True monorepo boundary:** `apps/web` and `apps/api` are independent workspace apps. Shared domain contracts live in `packages/types`, validation in `packages/shared`, and reusable helpers in `packages/utils`.
+- **Frontend:** Next.js App Router with a reusable component layout, Tailwind CSS design primitives, server-rendered product browsing, and client-side authenticated workflows for cart, wishlist, orders, seller tools, and admin tools.
+- **Backend:** Express uses clean layers: routes, controllers, services, models, middleware, validation, and error handling. MongoDB access is isolated behind Mongoose models and service functions.
+- **Security:** JWT access tokens, refresh-token cookies, password hashing with bcrypt, RBAC middleware, validation via Zod, Helmet security headers, CORS allow-listing, rate limiting, and environment validation.
+- **Data model performance:** Mongoose schemas include timestamps, text indexes, seller/category/price/rating indexes, user role indexes, order lookup indexes, and unique cart/wishlist ownership indexes.
+- **Railway-ready:** Deploy `apps/web` and `apps/api` as separate Railway services from the same repository with isolated build and start commands.
 
-## Project structure
+## Applications
 
-```txt
-src/app                 App Router pages and REST API route handlers
-src/components          Reusable layout, UI, and product components
-src/lib/auth.ts         JWT, cookies, password hashing, role guards
-src/lib/db.ts           Cached Mongoose connection
-src/lib/models          User, Product, Order, Cart, Wishlist schemas
-src/lib/services        Product, cart, order, wishlist, admin business logic
-src/lib/validation      Zod request validation schemas
-src/middleware.ts       Route-level role protection
-```
+### Frontend: `apps/web`
+
+- Next.js App Router
+- React and TypeScript
+- Tailwind CSS
+- API integration layer in `src/lib/api.ts`
+- Auth state provider in `src/providers/AuthProvider.tsx`
+- Customer, seller, and admin screens
+
+### Backend: `apps/api`
+
+- Express REST API
+- MongoDB/Mongoose schemas for `User`, `Product`, `Order`, `Cart`, and `Wishlist`
+- JWT authentication and role authorization
+- Service/controller/middleware architecture
+- Pagination, filtering, sorting, and full-text search for products
 
 ## Getting started
 
-1. Install dependencies with pnpm.
-
 ```bash
 pnpm install
-```
-
-2. Copy the environment template and set production-grade secrets.
-
-```bash
-cp .env.example .env.local
-```
-
-3. Start MongoDB locally or point `MONGODB_URI` at MongoDB Atlas.
-
-4. Run the development server.
-
-```bash
+cp .env.example .env
 pnpm dev
+```
+
+Run one service at a time:
+
+```bash
+pnpm dev:web
+pnpm dev:api
 ```
 
 ## Environment variables
 
-See `.env.example` for all supported settings:
+Copy `.env.example` to `.env` locally and set production values in Railway.
 
+### API service
+
+- `PORT`
+- `API_URL`
+- `WEB_ORIGIN`
 - `MONGODB_URI`
 - `JWT_ACCESS_SECRET`
 - `JWT_REFRESH_SECRET`
 - `ACCESS_TOKEN_TTL`
 - `REFRESH_TOKEN_TTL`
-- `NEXT_PUBLIC_APP_URL`
 - `BCRYPT_ROUNDS`
 - `RATE_LIMIT_WINDOW_MS`
 - `RATE_LIMIT_MAX`
+- `COOKIE_DOMAIN`
 
-## Roles and permissions
+### Web service
 
-- **Customer:** browse products, manage cart, wishlist, profile, and orders.
-- **Seller:** customer privileges plus seller dashboard, product management, inventory, and seller order status updates.
-- **Admin:** marketplace statistics, user/seller suspension, product moderation, and order oversight.
+- `NEXT_PUBLIC_API_URL`
+- `NEXT_PUBLIC_APP_URL`
 
 ## REST API overview
-
-### Authentication
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `POST /api/auth/refresh`
-
-### Marketplace
-
 - `GET /api/products?q=&category=&sort=&page=&limit=`
 - `GET /api/products/:id`
-
-### Cart and wishlist
-
-- `GET /api/cart`
-- `POST /api/cart`
-- `PATCH /api/cart/:productId`
-- `DELETE /api/cart/:productId`
-- `GET /api/wishlist`
-- `POST /api/wishlist`
-
-### Orders
-
-- `GET /api/orders`
-- `POST /api/orders`
-- `PATCH /api/seller/orders/:id`
-
-### Seller
-
-- `GET /api/seller/products`
-- `POST /api/seller/products`
-- `PATCH /api/seller/products/:id`
-- `DELETE /api/seller/products/:id`
-
-### Admin
-
+- `GET|POST|PATCH|DELETE /api/cart`
+- `GET|POST|DELETE /api/wishlist`
+- `GET|POST /api/orders`
+- `GET|POST|PATCH|DELETE /api/seller/products`
+- `GET|PATCH /api/seller/orders`
 - `GET /api/admin/stats`
+- `GET /api/admin/users`
 - `PATCH /api/admin/users/:id/suspend`
-- `DELETE /api/admin/products/:id`
+- `GET|DELETE /api/admin/products`
+- `GET /api/admin/orders`
 
-## Production hardening checklist
+## Railway deployment
 
-- Replace development JWT secrets before deployment.
-- Use MongoDB Atlas with backups and IP/network controls.
-- Move image uploads to signed S3 or Cloudinary uploads.
+Create two Railway services from the same GitHub repository.
+
+### API service
+
+- **Root directory:** `apps/api`
+- **Build command:** `pnpm install --frozen-lockfile && pnpm --filter @marketplace/api build`
+- **Start command:** `pnpm --filter @marketplace/api start`
+- **Required variables:** all API variables listed above.
+
+### Web service
+
+- **Root directory:** `apps/web`
+- **Build command:** `pnpm install --frozen-lockfile && pnpm --filter @marketplace/web build`
+- **Start command:** `pnpm --filter @marketplace/web start`
+- **Required variables:** `NEXT_PUBLIC_API_URL` pointing to the Railway API service `/api` URL and `NEXT_PUBLIC_APP_URL`.
+
+## Production hardening next steps
+
 - Add payment provider integration and webhook reconciliation.
-- Add audit logging for admin and seller actions.
-- Add integration tests with a test MongoDB instance.
+- Replace image URL input with signed uploads to S3 or Cloudinary.
+- Add automated test suites with a test MongoDB instance.
+- Add audit logs for seller/admin mutations.
+- Add background jobs for email, order notifications, and search indexing.

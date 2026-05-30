@@ -1,0 +1,5 @@
+import { formatCurrency } from "@marketplace/utils";
+import { marketplaceApi } from "@/lib/api";
+import { AddToCartButton } from "@/components/product/AddToCartButton";
+import { WishlistButton } from "@/components/product/WishlistButton";
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) { const { id } = await params; const product = await marketplaceApi.product(id); return <main className="container-page grid gap-10 py-10 lg:grid-cols-2"><img src={product.images[0]} alt={product.title} className="card h-[520px] w-full object-cover"/><section className="space-y-5"><p className="font-semibold uppercase text-brand-700">{product.category}</p><h1 className="text-4xl font-black">{product.title}</h1><p className="text-3xl font-black">{formatCurrency(product.price)}</p><p className="text-slate-700">{product.description}</p><p className="text-sm text-slate-600">Rating {product.rating.toFixed(1)} · {product.stock} available</p><div className="flex max-w-md gap-3"><AddToCartButton productId={product.id}/><WishlistButton productId={product.id}/></div></section></main>; }
